@@ -15,4 +15,15 @@ class Migration(migrations.Migration):
             name='expire_seconds',
             field=models.PositiveIntegerField(blank=True, help_text='Timedelta with seconds which the schedule will no longer trigger the task to run', null=True, verbose_name='Expires timedelta with seconds'),
         ),
+        migrations.AddField(
+            model_name='periodictask',
+            name='client_url',
+            field=models.CharField(blank=True, max_length=100, null=True),
+        ),
+        migrations.AddField(
+            model_name='periodictask',
+            name='property_id',
+            field=models.IntegerField(blank=True, null=True),
+        ),
+
     ]
