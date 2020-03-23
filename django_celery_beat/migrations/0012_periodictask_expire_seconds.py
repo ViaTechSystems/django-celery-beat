@@ -17,7 +17,7 @@ class Migration(migrations.Migration):
         ),
         migrations.AddField(
             model_name='periodictask',
-            name='client_url',
+            name='client_url_base',
             field=models.CharField(blank=True, max_length=100, null=True),
         ),
         migrations.AddField(
