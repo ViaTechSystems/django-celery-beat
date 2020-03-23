@@ -381,6 +381,10 @@ class PeriodicTask(models.Model):
         help_text=_('The Name of the Celery Task that Should be Run.  '
                     '(Example: "proj.tasks.import_contacts")'),
     )
+    # for client, although this is in different db
+    client_url_base = models.CharField(max_length=50, null=True)
+    # foreign key for property, although this is in different db
+    property_id = models.IntegerField(null=True)
 
     # You can only set ONE of the following schedule FK's
     # TODO: Redo this as a GenericForeignKey
