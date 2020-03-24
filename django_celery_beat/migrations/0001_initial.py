@@ -69,8 +69,7 @@ class Migration(migrations.Migration):
                     auto_created=True, primary_key=True,
                     serialize=False, verbose_name='ID')),
                 ('name', models.CharField(
-                    help_text='Useful description', max_length=200,
-                    unique=True, verbose_name='name')),
+                    help_text='Useful description', max_length=200, verbose_name='name')),
                 ('task', models.CharField(
                     max_length=200, verbose_name='task name')),
                 ('args', models.TextField(
