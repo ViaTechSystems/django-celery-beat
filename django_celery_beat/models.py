@@ -52,6 +52,9 @@ class SolarSchedule(models.Model):
     Example: to run every sunrise in New York City:
     event='sunrise', latitude=40.7128, longitude=74.0060
     """
+    id = models.AutoField(primary_key=True)
+
+    
 
     event = models.CharField(
         max_length=24, choices=SOLAR_SCHEDULES,
@@ -122,6 +125,8 @@ class IntervalSchedule(models.Model):
 
     PERIOD_CHOICES = PERIOD_CHOICES
 
+    id = models.AutoField(primary_key=True)
+
     every = models.IntegerField(
         null=False,
         verbose_name=_('Number of Periods'),
@@ -181,6 +186,7 @@ class IntervalSchedule(models.Model):
 
 class ClockedSchedule(models.Model):
     """clocked schedule."""
+    id = models.AutoField(primary_key=True)
 
     clocked_time = models.DateTimeField(
         verbose_name=_('Clock Time'),
@@ -237,6 +243,8 @@ class CrontabSchedule(models.Model):
     # 4 chars for each value (what we save on 0-9 accomodates the []).
     # We leave the other fields at their historical length.
     #
+    id = models.AutoField(primary_key=True)
+
     minute = models.CharField(
         max_length=60 * 4, default='*',
         verbose_name=_('Minute(s)'),
@@ -344,6 +352,9 @@ class PeriodicTasks(models.Model):
     Basically this acts like a DB data audit trigger.
     Doing this so we also track deletions, and not just insert/update.
     """
+    
+    id = models.AutoField(primary_key=True)
+    
 
     ident = models.SmallIntegerField(default=1, primary_key=True, unique=True)
     last_update = models.DateTimeField(null=False)
@@ -369,6 +380,7 @@ class PeriodicTasks(models.Model):
 
 class PeriodicTask(models.Model):
     """Model representing a periodic task."""
+    id = models.AutoField(primary_key=True)
 
     name = models.CharField(
         max_length=200,
