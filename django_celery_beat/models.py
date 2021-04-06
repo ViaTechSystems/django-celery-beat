@@ -182,7 +182,7 @@ class IntervalSchedule(models.Model):
 
 class ClockedSchedule(models.Model):
     """clocked schedule."""
-    id = models.AutoField(primary_key=True)
+    # id = models.AutoField(primary_key=True)
 
     clocked_time = models.DateTimeField(
         verbose_name=_('Clock Time'),
