@@ -1,22 +1,22 @@
 from itertools import combinations
+from unittest import mock
+
+import pytest
+from django.core.exceptions import ValidationError
 from django.test import TestCase
 
 from django_celery_beat.admin import PeriodicTaskAdmin
-from django_celery_beat.models import \
-    DAYS, \
-    PeriodicTask, \
-    CrontabSchedule, \
-    IntervalSchedule, \
-    SolarSchedule, \
-    ClockedSchedule
-from django.core.exceptions import ValidationError
+from django_celery_beat.models import (DAYS, ClockedSchedule, CrontabSchedule,
+                                       IntervalSchedule, PeriodicTask,
+                                       SolarSchedule)
 
 
+@pytest.mark.django_db()
 class ActionsTests(TestCase):
 
     @classmethod
     def setUpTestData(cls):
-        super(ActionsTests, cls).setUpTestData()
+        super().setUpTestData()
         cls.interval_schedule = IntervalSchedule.objects.create(every=10,
                                                                 period=DAYS)
 
@@ -75,23 +75,68 @@ class ActionsTests(TestCase):
         self.assertTrue(e2)
         self.assertTrue(e3)
 
-    def test_validate_unique_raises_if_schedule_not_set(self):
-        with self.assertRaises(ValidationError):
-            PeriodicTask().validate_unique()
 
-    def test_save_raises_for_multiple_schedules(self):
+@pytest.mark.django_db()
+class ValidateUniqueTests(TestCase):
+
+    def test_validate_unique_raises_if_schedule_not_set(self):
+        with self.assertRaises(ValidationError) as cm:
+            PeriodicTask(name='task0').validate_unique()
+        self.assertEqual(
+            cm.exception.args[0],
+            'One of clocked, interval, crontab, or solar must be set.',
+        )
+
+    def test_validate_unique_raises_for_multiple_schedules(self):
         schedules = [
             ('crontab', CrontabSchedule()),
             ('interval', IntervalSchedule()),
             ('solar', SolarSchedule()),
             ('clocked', ClockedSchedule())
         ]
+        expected_error_msg = (
+            'Only one of clocked, interval, crontab, or solar '
+            'must be set'
+        )
         for i, options in enumerate(combinations(schedules, 2)):
-            with self.assertRaises(ValidationError):
-                PeriodicTask(name='task{}'.format(i), **dict(options)).save()
+            name = f'task{i}'
+            options_dict = dict(options)
+            with self.assertRaises(ValidationError) as cm:
+                PeriodicTask(name=name, **options_dict).validate_unique()
+            errors = cm.exception.args[0]
+            self.assertEqual(errors.keys(), options_dict.keys())
+            for error_msg in errors.values():
+                self.assertEqual(error_msg, [expected_error_msg])
 
     def test_validate_unique_not_raises(self):
         PeriodicTask(crontab=CrontabSchedule()).validate_unique()
         PeriodicTask(interval=IntervalSchedule()).validate_unique()
         PeriodicTask(solar=SolarSchedule()).validate_unique()
         PeriodicTask(clocked=ClockedSchedule(), one_off=True).validate_unique()
+
+
+@pytest.mark.django_db()
+class DisableTasksTest(TestCase):
+
+    @classmethod
+    def setUpTestData(cls):
+        super().setUpTestData()
+        cls.interval_schedule = IntervalSchedule.objects.create(every=10,
+                                                                period=DAYS)
+
+    @mock.patch('django_celery_beat.admin.PeriodicTaskAdmin.'
+                '_message_user_about_update')
+    def test_disable_tasks(self, mock_message_user):
+        PeriodicTask.objects.create(name='name1', task='task1', enabled=True,
+                                    interval=self.interval_schedule)
+        PeriodicTask.objects.create(name='name2', task='task2', enabled=True,
+                                    interval=self.interval_schedule)
+
+        qs = PeriodicTask.objects.all()
+
+        PeriodicTaskAdmin(PeriodicTask, None).disable_tasks(None, qs)
+
+        for periodic_task in qs:
+            self.assertFalse(periodic_task.enabled)
+            self.assertIsNone(periodic_task.last_run_at)
+        mock_message_user.assert_called_once()
